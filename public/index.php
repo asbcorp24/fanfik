@@ -1,6 +1,8 @@
 <?php
 declare(strict_types=1);
 require dirname(__DIR__).'/src/community.php';
+// Initialize CSRF session before rendering HTML: commentsWidget is below page output.
+startCommunitySession();
 // Pages containing CSRF forms must never be cached by a reverse proxy.
 header('Cache-Control: private, no-store, max-age=0');
 header('Vary: Cookie');
