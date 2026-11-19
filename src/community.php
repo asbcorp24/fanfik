@@ -25,13 +25,19 @@ function communityDb(): PDO {
 }
 function startCommunitySession():void{
  if(session_status()===PHP_SESSION_ACTIVE)return;
- if(!headers_sent()){
-  ini_set('session.use_strict_mode','1');
-  ini_set('session.cookie_httponly','1');
-  ini_set('session.cookie_samesite','Lax');
-  session_set_cookie_params(['httponly'=>true,'secure'=>!empty($_SERVER['HTTPS'])&&$_SERVER['HTTPS']!=='off','samesite'=>'Lax','path'=>'/']);
+ if(headers_sent()){throw new RuntimeException('Session headers already sent');}
+ // Shared writable storage works on hosts with a broken/default PHP session.save_path.
+ $dir=dirname(__DIR__).'/storage/sessions';
+ if(!is_dir($dir)&&!@mkdir($dir,0700,true)&&!is_dir($dir)){
+  throw new RuntimeException('Cannot create PHP session directory: '.$dir);
  }
- session_start();
+ if(!is_writable($dir))throw new RuntimeException('PHP session directory is not writable: '.$dir);
+ ini_set('session.save_path',$dir);
+ ini_set('session.use_strict_mode','1');
+ ini_set('session.use_only_cookies','1');
+ $secure=(!empty($_SERVER['HTTPS'])&&$_SERVER['HTTPS']!=='off')||((string)($_SERVER['HTTP_X_FORWARDED_PROTO']??'')==='https');
+ session_set_cookie_params(['httponly'=>true,'secure'=>$secure,'samesite'=>'Lax','path'=>'/']);
+ if(!session_start())throw new RuntimeException('Failed to start PHP session');
 }
 function csrfToken():string{
  startCommunitySession();
@@ -40,7 +46,7 @@ function csrfToken():string{
 }
 function verifyCsrf():void{
  startCommunitySession();
- if(!is_string($_POST['csrf']??null)||!hash_equals(csrfToken(),$_POST['csrf'])){http_response_code(403);exit('Неверный защитный токен. Обновите страницу.');}
+ if(!is_string($_POST['csrf']??null)||!hash_equals(csrfToken(),$_POST['csrf'])){http_response_code(403);exit('Сессия устарела или браузер не сохранил cookie. Вернитесь назад и обновите страницу (Ctrl+F5).');}
 }
 function commentTarget(string $scope,int $movieId,string $type):bool{
  if($scope==='site')return $movieId===0&&$type==='';
