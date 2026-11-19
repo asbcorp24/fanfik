@@ -2,3 +2,6 @@ storage/*
 !storage/.gitkeep
 .env
 .DS_Store
+
+public/assets/posters/*
+!public/assets/posters/.gitkeep
