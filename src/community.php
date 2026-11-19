@@ -68,11 +68,13 @@ function commentsFor(string $scope,int $id,string $type):array{
 }
 function commentsWidget(string $scope,int $id=0,string $type=''):void{
  $comments=[];$error=false;
+ // Resolve the CSRF token before emitting markup, so headers can still be sent.
+ try{$token=csrfToken();}catch(Throwable $e){error_log('Comment session: '.$e->getMessage());$token=null;}
  try{$comments=commentsFor($scope,$id,$type);}catch(Throwable $e){error_log($e->getMessage());$error=true;}
  echo '<section class="comments" id="comments"><h2>Комментарии</h2><p class="comments-hint">Обсудите фильм или историю. Новые сообщения появляются после проверки модератором.</p>';
  if(isset($_GET['comment']))echo '<p class="notice">'.(($_GET['comment']==='sent')?'Комментарий отправлен на модерацию.':'Не удалось отправить комментарий.').'</p>';
- if($error){echo '<p class="notice">Комментарии временно недоступны.</p></section>';return;}
- echo '<form class="comment-form" action="/comment.php" method="post"><input type="hidden" name="csrf" value="'.e(csrfToken()).'"><input type="hidden" name="scope" value="'.e($scope).'"><input type="hidden" name="movie_id" value="'.$id.'"><input type="hidden" name="story_type" value="'.e($type).'"><label>Ваше имя<input name="author" maxlength="60" required placeholder="Как к вам обращаться"></label><label>Комментарий<textarea name="body" maxlength="3000" minlength="3" rows="5" required placeholder="Ваши впечатления…"></textarea></label><div class="trap" aria-hidden="true"><label>Сайт<input name="website" tabindex="-1" autocomplete="off"></label></div><button class="filter-btn" type="submit">Отправить на модерацию</button></form>';
+ if($error||$token===null){echo '<p class="notice">Комментарии временно недоступны. Проверьте права на запись в storage/ и storage/sessions/.</p></section>';return;}
+ echo '<form class="comment-form" action="/comment.php" method="post"><input type="hidden" name="csrf" value="'.e($token).'"><input type="hidden" name="scope" value="'.e($scope).'"><input type="hidden" name="movie_id" value="'.$id.'"><input type="hidden" name="story_type" value="'.e($type).'"><label>Ваше имя<input name="author" maxlength="60" required placeholder="Как к вам обращаться"></label><label>Комментарий<textarea name="body" maxlength="3000" minlength="3" rows="5" required placeholder="Ваши впечатления…"></textarea></label><div class="trap" aria-hidden="true"><label>Сайт<input name="website" tabindex="-1" autocomplete="off"></label></div><button class="filter-btn" type="submit">Отправить на модерацию</button></form>';
  if(!$comments)echo '<p class="comments-hint">Пока комментариев нет. Станьте первым!</p>';
  foreach($comments as $c)echo '<article class="comment"><div><strong>'.e($c['author']).'</strong><time>'.e($c['created_at']).'</time></div><p>'.nl2br(e($c['body']),false).'</p></article>';
  echo '</section>';
