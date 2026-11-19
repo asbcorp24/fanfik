@@ -1,0 +1,6 @@
+Options -Indexes
+RewriteEngine On
+RewriteRule ^(?:storage|src|tests)(?:/|$) - [F,NC]
+RewriteRule ^(?:README\.md|\.gitignore|composer\.(?:json|lock))$ - [F,NC]
+RewriteCond %{REQUEST_URI} !^/public/
+RewriteRule ^(.*)$ public/$1 [L]
