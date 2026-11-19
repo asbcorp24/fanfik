@@ -4,8 +4,8 @@ require dirname(__DIR__).'/src/bootstrap.php';
 $path=parse_url($_SERVER['REQUEST_URI'],PHP_URL_PATH)?:'/';
 $path=preg_replace('~^/public(?=/|$)~','',$path)?:'/';
 $page='catalog';$m=null;$type='';
-if(preg_match('~^/movie/([1-9][0-9]*)/?$~D',$path,$a)){$page='movie';$m=movie((int)$a[1]);}
-elseif(preg_match('~^/read/([1-9][0-9]*)/([a-z]+)/?$~D',$path,$a)){$page='read';$m=movie((int)$a[1]);$type=$a[2];if(!isset(TYPES[$type]) || ($m && !contentOf($m,$type)))$m=null;}
+if(preg_match('~^/movie/([1-9][0-9]*)/?$~D',$path,$a)){$page='movie';try{$m=movie((int)$a[1]);}catch(Throwable $ex){error_log($ex->getMessage());$m=null;}}
+elseif(preg_match('~^/read/([1-9][0-9]*)/([a-z]+)/?$~D',$path,$a)){$page='read';try{$m=movie((int)$a[1]);}catch(Throwable $ex){error_log($ex->getMessage());$m=null;}$type=$a[2];if(!isset(TYPES[$type]) || ($m && !contentOf($m,$type)))$m=null;}
 elseif($path!=='/'){$page='notfound';}
 if(($page==='movie'||$page==='read')&&!$m){http_response_code(404);$page='notfound';}
 $error='';$items=[];$genres=[];$count=0;$pages=1;$p=1;
