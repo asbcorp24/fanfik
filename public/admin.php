@@ -8,7 +8,9 @@ header('Cache-Control: no-store');
 $hash=getenv('FANFIK_ADMIN_PASSWORD_HASH')?:'';
 $hashFile=dirname(__DIR__).'/storage/admin-password.hash';
 if(!$hash&&is_file($hashFile))$hash=trim((string)file_get_contents($hashFile));
-$configured=$hash!==''&&password_get_info($hash)['algo']!==null;
+$plainFile=dirname(__DIR__).'/storage/admin-password.txt';
+$plain=is_file($plainFile)&&is_readable($plainFile)?trim((string)file_get_contents($plainFile)):'';
+$configured=($hash!==''&&password_get_info($hash)['algo']!==null)||$plain!=='';
 $error='';
 if($_SERVER['REQUEST_METHOD']==='POST'){
  verifyCsrf();
@@ -21,7 +23,7 @@ if($_SERVER['REQUEST_METHOD']==='POST'){
   $now=time();
   if(!$configured){$error='Пароль администратора ещё не настроен.';}
   elseif((int)($_SESSION['login_block_until']??0)>$now){$error='Слишком много попыток. Попробуйте позднее.';}
-  elseif(password_verify((string)($_POST['password']??''),$hash)){
+  elseif(($plain!==''&&hash_equals($plain,(string)($_POST['password']??'')))||($plain===''&&$hash!==''&&password_verify((string)($_POST['password']??''),$hash))){
    session_regenerate_id(true);$_SESSION['admin']=true;$_SESSION['login_fails']=0;
    header('Location: /admin.php',true,303);exit;
   }else{
@@ -57,7 +59,7 @@ if($logged){
 <header class="topbar"><div class="wrap head"><a class="logo" href="/">✦ Фанфик</a><nav><a href="/">На сайт</a><?php if($logged):?><form method="post"><input type="hidden" name="csrf" value="<?=e(csrfToken())?>"><input type="hidden" name="action" value="logout"><button class="filter-btn">Выйти</button></form><?php endif;?></nav></div></header>
 <main class="wrap admin"><h1>Панель управления</h1>
 <?php if($error):?><p class="notice"><?=e($error)?></p><?php endif;?>
-<?php if(!$configured):?><p class="notice">Настройте пароль администратора: создайте файл <code>storage/admin-password.hash</code> с результатом <code>password_hash()</code> или задайте переменную окружения <code>FANFIK_ADMIN_PASSWORD_HASH</code>.</p>
+<?php if(!$configured):?><p class="notice">Создайте текстовый файл <code>storage/admin-password.txt</code> и впишите в него пароль одной строкой. Файл должен находиться вне публичного каталога сайта.</p>
 <?php elseif(!$logged):?><form method="post" class="comment-form login"><input type="hidden" name="csrf" value="<?=e(csrfToken())?>"><input type="hidden" name="action" value="login"><label>Пароль администратора<input type="password" name="password" required autocomplete="current-password"></label><button class="filter-btn">Войти</button></form>
 <?php else:?>
 <div class="admin-stats"><div>Фильмов <strong><?=$stats['movies']?></strong></div><div>Ожидают <strong><?=$stats['pending']?></strong></div><div>Опубликовано <strong><?=$stats['approved']?></strong></div><div>Отклонено <strong><?=$stats['rejected']?></strong></div></div>
