@@ -14,7 +14,7 @@ const TYPES = [
 function db(): PDO {
  static $pdo;
  if($pdo instanceof PDO) return $pdo;
- $path = getenv('FANFIK_DB_PATH') ?: dirname(__DIR__).'/storage/movies.sqlite';
+ $path = getenv('FANFIK_DB_PATH') ?: dirname(__DIR__).'/storage/spoilers.db';
  if(!is_file($path) || !is_readable($path)) throw new RuntimeException('База данных не найдена или недоступна. Проверьте FANFIK_DB_PATH.');
  $pdo = new PDO('sqlite:'.realpath($path), null, null, [PDO::ATTR_ERRMODE=>PDO::ERRMODE_EXCEPTION, PDO::ATTR_DEFAULT_FETCH_MODE=>PDO::FETCH_ASSOC, PDO::ATTR_TIMEOUT=>3, PDO::ATTR_PERSISTENT=>false, PDO::ATTR_EMULATE_PREPARES=>false]);
  return $pdo;
