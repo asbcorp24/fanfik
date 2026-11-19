@@ -55,7 +55,7 @@ if($logged){
   $q=$pdo->prepare('SELECT * FROM comments WHERE status=? ORDER BY id DESC LIMIT 100');$q->execute([$status]);$comments=$q->fetchAll();
  }catch(Throwable $e){error_log($e->getMessage());$error='Не удалось прочитать статистику или комментарии.';}
 }
-?><!doctype html><html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex,nofollow"><title>Админка — Фанфик</title><link rel="stylesheet" href="/assets/site.css"></head><body>
+?><!doctype html><html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex,nofollow"><title>Админка — Фанфик</title><link rel="stylesheet" href="/assets/site.css"><link rel="stylesheet" href="/assets/mobile.css"></head><body class="admin-page">
 <header class="topbar"><div class="wrap head"><a class="logo" href="/">✦ Фанфик</a><nav><a href="/">На сайт</a><?php if($logged):?><form method="post"><input type="hidden" name="csrf" value="<?=e(csrfToken())?>"><input type="hidden" name="action" value="logout"><button class="filter-btn">Выйти</button></form><?php endif;?></nav></div></header>
 <main class="wrap admin"><h1>Панель управления</h1>
 <?php if($error):?><p class="notice"><?=e($error)?></p><?php endif;?>
@@ -63,7 +63,7 @@ if($logged){
 <?php elseif(!$logged):?><form method="post" class="comment-form login"><input type="hidden" name="csrf" value="<?=e(csrfToken())?>"><input type="hidden" name="action" value="login"><label>Пароль администратора<input type="password" name="password" required autocomplete="current-password"></label><button class="filter-btn">Войти</button></form>
 <?php else:?>
 <div class="admin-stats"><div>Фильмов <strong><?=$stats['movies']?></strong></div><div>Ожидают <strong><?=$stats['pending']?></strong></div><div>Опубликовано <strong><?=$stats['approved']?></strong></div><div>Отклонено <strong><?=$stats['rejected']?></strong></div></div>
-<h2>Модерация комментариев</h2><nav class="admin-tabs"><a href="/admin.php?status=pending">Ожидают (<?=$stats['pending']?>)</a><a href="/admin.php?status=approved">Опубликованы (<?=$stats['approved']?>)</a><a href="/admin.php?status=rejected">Отклонены (<?=$stats['rejected']?>)</a></nav>
+<h2>Модерация комментариев</h2><nav class="admin-tabs" aria-label="Статус комментариев"><a href="/admin.php?status=pending" <?=$status==='pending'?'aria-current="page"':''?>>Ожидают (<?=$stats['pending']?>)</a><a href="/admin.php?status=approved" <?=$status==='approved'?'aria-current="page"':''?>>Опубликованы (<?=$stats['approved']?>)</a><a href="/admin.php?status=rejected" <?=$status==='rejected'?'aria-current="page"':''?>>Отклонены (<?=$stats['rejected']?>)</a></nav>
 <?php if(!$comments):?><p class="comments-hint">В этом разделе пока нет комментариев.</p><?php endif;?>
 <?php foreach($comments as $c):?>
 <article class="comment"><div><strong><?=e($c['author'])?></strong><time><?=e($c['created_at'])?></time></div><p><?=nl2br(e($c['body']),false)?></p><p class="comments-hint">Раздел: <?=e($c['scope'])?> · фильм #<?=(int)$c['movie_id']?> · <?=e($c['story_type'])?></p>
