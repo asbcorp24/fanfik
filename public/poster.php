@@ -25,7 +25,7 @@ function servePoster(string $path,string $mime):never{
 foreach($types as $ext=>$mime){if(is_file($base.'.'.$ext)){servePoster($base.'.'.$ext,$mime);}}
 if(!extension_loaded('curl')){http_response_code(503);exit;}
 $host=parse_url($url,PHP_URL_HOST);
-if(!$host || !preg_match('/^[a-z0-9.-]+$/i',$host)){http_response_code(404);exit;}
+if(!$host || parse_url($url,PHP_URL_PORT)!==null || parse_url($url,PHP_URL_USER)!==null || parse_url($url,PHP_URL_PASS)!==null || !preg_match('/^[a-z0-9.-]+$/i',$host)){http_response_code(404);exit;}
 // Resolve once, pin the address in curl and reject private / reserved destinations.
 $ips=gethostbynamel($host)?:[];
 $public=array_values(array_filter($ips,static fn($ip)=>filter_var($ip,FILTER_VALIDATE_IP,FILTER_FLAG_IPV4|FILTER_FLAG_NO_PRIV_RANGE|FILTER_FLAG_NO_RES_RANGE)!==false));
