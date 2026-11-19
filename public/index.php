@@ -1,6 +1,9 @@
 <?php
 declare(strict_types=1);
 require dirname(__DIR__).'/src/community.php';
+// Pages containing CSRF forms must never be cached by a reverse proxy.
+header('Cache-Control: private, no-store, max-age=0');
+header('Vary: Cookie');
 $path=parse_url($_SERVER['REQUEST_URI'],PHP_URL_PATH)?:'/';
 $path=preg_replace('~^/public(?=/|$)~','',$path)?:'/';
 $page='catalog';$m=null;$type='';
