@@ -21,7 +21,18 @@ function db(): PDO {
 }
 function e(mixed $s):string{return htmlspecialchars((string)$s, ENT_QUOTES|ENT_SUBSTITUTE,'UTF-8');}
 function linkMovie(int $id):string{return '/movie/'.$id;}
-function title(array $movie):string{return trim((string)($movie['title_ru']??'')) ?: (string)$movie['title'];}
+function title(array $movie):string{
+ $original=trim((string)($movie['title']??''));
+ $translated=trim((string)($movie['title_ru']??''));
+ // Bad machine translations sometimes contain the whole synopsis instead of a title.
+ // Keep the source title without modifying the database.
+ if($translated==='' || mb_strlen($translated)>110 || preg_match('/[.!?]\\s+.{20,}/u',$translated))return $original;
+ return $translated;
+}
+function catalogTitle(array $movie):string{
+ $name=title($movie);
+ return mb_strlen($name)>90?mb_substr($name,0,89).'…':$name;
+}
 function excerpt(string $s,int $limit=180):string{
  $s=trim(preg_replace('/\s+/u',' ',strip_tags($s))??'');
  return mb_strlen($s)>$limit?mb_substr($s,0,$limit).'…':$s;
