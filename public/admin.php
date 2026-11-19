@@ -43,10 +43,11 @@ if($_SERVER['REQUEST_METHOD']==='POST'){
 $logged=!empty($_SESSION['admin']);
 $status=(string)($_GET['status']??'pending');
 if(!in_array($status,['pending','approved','rejected'],true))$status='pending';
-$stats=['movies'=>0,'pending'=>0,'approved'=>0,'rejected'=>0];$comments=[];
+$stats=['movies'=>0,'pending'=>0,'approved'=>0,'rejected'=>0];$comments=[];$recentMovies=[];
 if($logged){
  try{
   $stats['movies']=(int)db()->query('SELECT count(*) FROM movies')->fetchColumn();
+  $recentMovies=db()->query('SELECT id,title,title_ru,year,translate_status,novel_status FROM movies ORDER BY id DESC LIMIT 20')->fetchAll();
   $pdo=communityDb();
   foreach(['pending','approved','rejected'] as $s){$q=$pdo->prepare('SELECT count(*) FROM comments WHERE status=?');$q->execute([$s]);$stats[$s]=(int)$q->fetchColumn();}
   $q=$pdo->prepare('SELECT * FROM comments WHERE status=? ORDER BY id DESC LIMIT 100');$q->execute([$status]);$comments=$q->fetchAll();
@@ -69,4 +70,5 @@ if($logged){
 <form method="post"><input type="hidden" name="csrf" value="<?=e(csrfToken())?>"><input type="hidden" name="action" value="<?=$action?>"><input type="hidden" name="id" value="<?=(int)$c['id']?>"><input type="hidden" name="return_status" value="<?=e($status)?>"><button class="filter-btn" <?=$action==='delete'?'onclick="return confirm(\'Удалить комментарий?\')"':''?>><?=$label?></button></form>
 <?php endforeach;?></div></article>
 <?php endforeach;?>
+<h2>Последние фильмы в базе</h2><p class="comments-hint">Просмотр записей из spoilers.db. Исходная база не изменяется.</p><div class="admin-movies"><?php foreach($recentMovies as $film):?><a href="/movie/<?=(int)$film['id']?>"><strong><?=e(title($film))?></strong><span><?=e($film['year'])?> · перевод: <?=e($film['translate_status'])?> · роман: <?=e($film['novel_status'])?></span></a><?php endforeach;?></div>
 <?php endif;?></main></body></html>
